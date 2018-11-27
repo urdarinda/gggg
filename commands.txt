@@ -1,0 +1,192 @@
+
+create keyspace cts_chennai with replication = {'class': 'SimpleStrategy', 'replication_facotor':3};
+
+
+create table employees(id int,name varchar,dept int, city varchar, primary key(id,dept,city) )
+
+insert into employees(id,name,dept,city) values (1,'Mukesh',100,'BLR')
+
+create index on employees(name);
+
+
+create table emp(empid int primary key,first_name varchar,
+last_name varchar,ssn int) with compression_parameters:sstable_compression = 'Encryptor'
+and compression_parameters:cipher_algorithm = 'AES/ECB/PKCS5Padding'
+and compression_parameters:secret_key_strength = 128;
+
+
+ALTER TABLE dept
+WITH compression_parameters:sstable_compression = 'Encryptor'
+AND compression_parameters:cipher_algorithm = 'AES/ECB/PKCS5Padding'
+AND compression_parameters:secret_key_strength = 128; 
+
+This example of a social music service requires a songs table having a title, album, and artist column, plus
+a column (called data) for the actual audio file itself. The table uses a UUID as a primary key.
+
+CREATE TABLE songs (
+id uuid PRIMARY KEY,
+title text,
+album text,
+artist text,
+data blob
+);
+
+CREATE TABLE playlists (
+id uuid,
+song_order int,
+song_id uuid,
+title text,
+album text,
+artist text,
+PRIMARY KEY (id, song_order ) );
+
+INSERT INTO playlists (id, song_order, song_id, title, artist, album)
+VALUES (62c36092-82a1-3a00-93d1-46196ee77204, 1,
+a3e64f8f-bd44-4f28-b8d9-6938726e34d4, 'La Grange', 'ZZ Top', 'Tres
+Hombres');
+INSERT INTO playlists (id, song_order, song_id, title, artist, album)
+VALUES (62c36092-82a1-3a00-93d1-46196ee77204, 2,
+8a172618-b121-4136-bb10-f665cfc469eb, 'Moving in Stereo', 'Fu Manchu',
+'We Must Obey');
+INSERT INTO playlists (id, song_order, song_id, title, artist, album)
+VALUES (62c36092-82a1-3a00-93d1-46196ee77204, 3,
+2b09185b-fb5a-4734-9b56-49077de9edbf, 'Outside Woman Blues', 'Back Door
+Slam', 'Roll Away');
+
+nodetool help command name
+nodetool status
+nodetool repair:
+nodetool repair -seq
+$ nodetool repair -pr -hosts 10.2.2.20 10.2.2.21
+$ nodetool -st a9fa31c7-f3c0-44d1-b8e7-a26228867840c -et f5bb146cdb51-
+475ca44f-9facf2f1ad6e
+nodetool scrub
+nodetool -u cassandra -pw cassandra assassinate 192.168.100.2
+nodetool tablehistograms
+nodetool tablestats
+nodetool cleanup
+nodetool clearsnapshot
+nodetool compact
+nodetool compactionhistory
+nodetool compactionstats
+nodetool decommission
+nodetool describecluster
+nodetool describering
+nodetool drain: You typically use this command before upgrading a node to a new version of Cassandra.
+nodetool flush
+nodetool gcstats
+nodetool getcompactionthreshold
+nodetool getcompactionthroughput
+nodetool getendpoints
+nodetool getsstables
+nodetool gossipinfo
+nodetool info
+nodetool invalidatekeycache
+nodetool invalidaterowcache
+nodetool join
+nodetool listsnapshots
+nodetool move
+nodetool netstats
+nodetool rangekeysample
+nodetool rebuild: Use this command to bring up a new data center in an existing cluster.
+nodetool rebuild_index
+nodetool refresh:Loads newly placed SSTables onto the system without a restart.
+nodetool reloadtriggers
+nodetool removenode:Run this command only on nodes that are down
+nodetool setcachecapacity: nodetool <options> setcachecapacity -- <key-cache-capacity> <row-cachecapacity>
+nodetool setcachekeystosave
+nodetool snapshot
+nodetool toppartitions: The nodetool toppartitions command samples and prints the most active partitions during the
+duration specified
+nodetool upgradesstables
+
+
+
+cluster_name:'MyCassandraCluster'
+listen_address:IP
+endpoint_snitch:GossipingPropertyFileSnitch
+rpc_address
+- seeds:"110.82.155.0,110.82.155.3"
+
+cassandra-rackdc.properties
+dc=DC1
+rack=RAC1
+
+cqlsh IP
+
+create keyspace cts_chennai_Name with 
+replication = {'class': 'NetworkTopologyStrategy', 
+'DC1':2,'DC2':3} 
+
+create table employees(id int,name varchar,dept int,city varchar, PRIMARY KEY(id,dept,city))
+
+nodetool getendpoints keyspace table partition_id
+
+authenticator: com.datastax.bdp.cassandra.auth.PasswordAuthenticator
+authorizer: com.datastax.bdp.cassandra.auth.CassandraAuthorizer
+./cqlsh -3 localhost -u cassandra -p cassandra
+alter user cassandra with password 'newpassword';
+
+; Sample ~/.cqlshrc file.
+[authentication]
+username = fred
+password = !!bang!!$
+
+create user robin with password 'manager' superuser;
+create user laura with password 'newhire';
+list users;
+drop user laura;
+
+GRANT permission ON resource TO user  
+Possible permissions that can be granted currently include:
+
+ALL
+ALTER
+AUTHORIZE
+CREATE
+DROP
+MODIFY
+SELECT
+
+The various permission/resource combinations currently are:
+
+Permission	CQL Statements
+ALTER	ALTER KEYSPACE, ALTER TABLE, CREATE INDEX, DROP INDEX
+AUTHORIZE	GRANT, REVOKE
+CREATE	CREATE KEYSPACE, CREATE TABLE
+DROP	DROP KEYSPACE, DROP TABLE
+MODIFY	INSERT, DELETE, UPDATE, TRUNCATE
+SELECT	SELECT
+
+ example of grant/revoking permissions to a new user might be:
+
+cqlsh> create user laura with password 'newhire';
+cqlsh> grant all on dev.emp to laura;
+
+GRANT SELECT ON KEYSPACE dev TO laura;
+GRANT MODIFY ON KEYSPACE dev TO laura;
+
+cqlsh> revoke all on dev.emp from laura;
+cqlsh> grant select on dev.emp to laura;
+The new ‘laura’ user account can login, read data from the emp table, but cannot perform other actions such as reading data from another table for which it has not been granted rights:
+
+robinsmac:bin robin$ ./cqlsh -3 localhost -u laura -p newhire
+Connected to Test Cluster at localhost:9160.
+[cqlsh 2.2.0 | Cassandra 1.1.8.1-SNAPSHOT | CQL spec 3.0.0 | Thrift protocol 19.33.0]
+
+Use HELP for help.
+cqlsh> use dev;
+cqlsh:dev> select * from emp;
+
+empid | empname
+------+---------
+1     |   robin
+2     |   laura
+cqlsh:dev> select * from emp_bonus;
+Bad Request: User laura has no SELECT permission on <table dev.emp_bonus> or any of its parents
+Finding out what login accounts possess what permissions on what objects and what objects have permissions granted on them is performed through various list commands (as long as the user has the authority to use them):
+
+cqlsh> list all permissions of laura;
+
+
+

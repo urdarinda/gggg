@@ -1,0 +1,131 @@
+
+
+WalmartRight:
+DC: BLR
+seed : 172.30.110.246
+
+DC:Chennai
+
+seed : 172.30.111.123
+
+WalmartLeft
+DC: BLR
+seed : 172.30.111.180
+
+DC:Chennai
+172.30.111.15
+
+
+./cassandra
+
+-----------------------------------------------------------------
+
+create database walmart;
+
+SQL : CQL 
+
+Replica placement strategy 
+
+: SimpleStrategy 
+: NetworkTopologyStrategy 
+
+create keyspace walmart_mukesh with replication= {'class':'NetworkTopologyStrategy','BLR':2,'Chennai':2};
+
+describe keyspaces;
+
+use walmart_mukesh;
+
+create table employees(id int,name varchar,dept int,city varchar);
+
+create table employees(id int,name varchar,dept int,city varchar,primary key(id,dept,city));
+
+describe tables;
+
+describe employees;
+
+insert into employees(id,name,dept,city) values(1,'Mukesh,100,'BLR');
+insert into employees(id,name,dept,city) values(1,'Mukesh,100,'BLR');
+insert into employees(id,name,dept,city) values(3,'Karthik,100,'Chennai');
+insert into employees(id,name,dept,city) values(44,'Madhu,100,'Delhi');
+insert into employees(id,name,dept,city) values(5,'Nidhi,100,'Amhedabad');
+
+insert into employees(id,name,dept,city) values(6,'Shalini,200,'Amhedabad');
+
+insert into employees(id,dept,city) values(2,200,'HYD');
+
+select * from employees;
+
+select name,city from employees where id=2; Working
+
+select name,city from employees where dept=100; Not work 
+
+create index myindex1 on employees(dept);
+
+select name,city from employees where dept=100; will work
+
+select name from employees where city='BLR'; not not work
+
+create index myindex1 on employees(city);
+
+select name from employees where city='BLR'; Will work now
+
+
+insert into employees(id,name,dept,city) values(1,'ABC,100,'Delhi');
+
+insert into employees(id,name,dept,city) values(1,'XYZ,300,'Mumbai');
+
+
+select name from employees where id=1 order by dept desc , city asc;
+
+consistency:
+
+One,two,three,four, quorum, local_quorum, ANY,each_quorum,serial,local_serial,ALL
+
+consistency ALL;
+
+consistency;
+
+
+nodetool getendpoints walmart_mukesh employees 1
+
+
+nodetool getendpoints walmart_mukesh employees 500
+
+
+select * from employees where id=1;
+
+insert into employees JSON '{"id":10,"name":"Prasad","city":"BLR","dept":150}';
+
+select json id,city,name from employees;
+
+
+Alter table employees ADD state varchar;
+
+describe employees;
+
+nodetool.bat describecluster
+
+nodetool.bat info
+
+nodetool.bat ring
+
+nodetool tablestats walmart_mukesh.employees
+
+nodetool flush walmart_mukesh employees
+
+
+nodetool compact walmart_mukesh employees
+
+nodetool compactionstats walmart_mukesh employees
+
+
+CREATE TABLE device_timeseries (
+device_id uuid,
+name text,
+cpu_util float,
+io varint,
+PRIMARY KEY (device_id,name)
+) WITH compression = { 'sstable_compression' : 'SnappyCompressor', 'chunk_length_kb' : 64 } AND compaction = { 'class' : 'DateTieredCompactionStrategy', 'min_threshold':4 } AND CLUSTERING ORDER BY (name DESC);
+
+
+

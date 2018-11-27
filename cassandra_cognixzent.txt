@@ -1,0 +1,728 @@
+
+Creating keyspace :CREATE KEYSPACE creates a top-level namespace and sets the keyspace name, replica placement strategy class, replication factor, and DURABLE_WRITES options for the keyspace.
+
+
+authenticator: PasswordAuthenticator 
+authorizer: CassandraAuthorizer
+
+Also, in the clustered setup we need to do following change in the system_auth keyspace
+
+alter keyspace system_auth with replciation = {'class': 'NetworkTopologyStrategy','BLR':'2','Chennai':'2'};
+
+cqlsh.bat 10.11.12.12 -u cassandra -p cassandra
+
+CREATE ROLE fourkitescassadmin WITH PASSWORD = 'Pass123' AND LOGIN = true AND superuser=true;
+cqlsh.bat -u fourkitescassadmin -p Pass123
+--------------------------------------
+
+
+
+nodetool repair system_auth
+
+CREATE USER mukesh1 WITH PASSWORD ='P123' superuser=true;
+
+CREATE ROLE cassadmin WITH PASSWORD = 'Pass123' AND LOGIN = true AND superuser=true;
+
+
+cqlsh.bat -u coach -p Pass123
+
+GRANT SELECT ON ALL KEYSPACES TO mukesh;
+
+GRANT ALL PERMISSIONS ON my_keyspace.plays TO mukesh;
+GRANT ALL PERMISSIONS ON my_keyspace.plays TO cassadmin;
+
+
+GRANT ALL PERMISSIONS ON KEYSPACE my_keyspace TO mukesh;
+
+GRANT ALL PERMISSIONS ON my_keyspace.plays TO mukesh
+
+REVOKE SELECT ON my_keyspace.plays FROM cassadmin;
+
+list ALL;
+
+cqlsh> create keyspace mukesh_keyspace with replication={'class':'NeworkTopologyStrategy', 'BLR':1,'Chennai':2};
+
+describe keyspaces;
+
+describe keyspace test_keyspace;
+
+use test_keyspace;
+
+create table employees(id int,dept int,city varchar,name varchar, primary key(dept,city));
+
+describe tables;
+
+describe employees;
+
+insert into employees(id,dept,city,name) values(1,100,'Pune','Kamlesh');
+insert into employees(dept,city,name) values(101,'BLR','Mukesh');
+
+select * from employees;
+
+insert into employees(id,dept,name,city) values(1,100,'Kamlesh Kurkarni','Pune');
+
+insert into employees(id,dept,city,name) values(2,100,'Pune','Vimal');
+insert into employees(id,dept,city,name) values(3,101,'Pune','Sunder');
+
+-------------------------------------------------------------------------------
+
+create table employees1(id int,dept int,city varchar,name varchar, primary key(dept,city,id));
+
+insert into employees1(id,dept,city,name) values(2,100,'Pune','Vimal');
+insert into employees1(id,dept,city,name) values(3,101,'Pune','Sunder');
+insert into employees1(id,dept,name,city) values(1,100,'Kamlesh Kurkarni','Pune')
+
+Select * from employees1;
+
+Select name,city from employees1 where id=3; : not working
+
+Select name,city from employees1 where dept=100;: working
+
+Select name,city from employees1 where dept=100 order by city; working
+
+Select name,city from employees1 where dept=100 order by city,id;: working
+
+Select name,city from employees1 where city='Pune'; not working
+
+Select name,city from employees1 where dept=100 order by id;: Not working
+
+create index myindex on employees1(city);
+
+describe index myindex;
+
+Select name,city from employees1 where city='Pune'; working
+
+create index myindex1 on employees1(id);
+
+Select name,city from employees1 where id=3; : working
+--------------------------------------------------------------
+
+Creating cluster:
+
+node0 10.168.66.41 (seed1)
+node1 10.176.43.66
+node2 10.168.247.41
+node3 10.176.170.59 (seed2)
+node4 10.169.61.170
+node5 10.169.30.138
+
+sudo rm -rf /var/lib/cassandra/data/system/*
+--seeds
+listen_address:
+rpc_address:
+broadcast_address:
+
+endpoint_snitch
+
+Example:
+cluster_name: 'MyCassandraCluster'
+num_tokens: 256
+seed_provider:
+- class_name: org.apache.cassandra.locator.SimpleSeedProvider
+parameters:
+- seeds: "10.168.66.41,10.176.170.59"
+listen_address:
+endpoint_snitch: GossipingPropertyFileSnitch
+
+In the cassandra-rackdc.properties file, assign the data center and rack names you determined
+in the Prerequisites. For example:
+Nodes 0 to 2
+## Indicate the rack and dc for this node
+dc=DC1
+rack=RAC1
+Nodes 3 to 5
+## Indicate the rack and dc for this node
+dc=DC2
+rack=RAC1
+
+After you have installed and configured Cassandra on all nodes, start the seed nodes one at a time,and then start the rest of the nodes.
+-------------------------------------------------------
+
+nodetool status
+
+----------------------
+Add node :
+Use nodetool status to verify that the node is fully bootstrapped and all other nodes are up (UN) and not in any other state.
+After all new nodes are running, run 
+nodetool cleanup 
+on each of the previously existing nodes to remove the keys that no longer belong to those nodes. Wait for cleanup to complete on one node
+before running nodetool cleanup on the next node.
+
+---------------------------------------------------------
+Remove node:
+nodetool decommission
+Use nodetool netstats to monitor the progress.
+
+----------------------------------------------------------------
+
+cqlsh.bat 10.11.12.13
+
+CREATE KEYSPACE mukesh_keyspace WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'Pune' : 3,'BLR' : 2} AND DURABLE_WRITES = true;
+
+
+describe keyspaces;
+
+use mukesh_keyspace;
+
+create table employees(id int,name text,city varchar,dept int,primary key(dept,city));
+
+nodetool describering mukesh_keyspace
+
+lightweight transaction : if exists 
+
+insert into employees(id,name,city,dept) values(1,'Mukesh','BLR',100);
+
+
+nodetool.bat getendpoints mukesh_keyspace employees 1
+
+nodetool.bat cleanup
+
+nodetool.bat describecluster
+
+nodetool.bat info
+
+nodetool tablestats mukesh_keyspace.employees
+
+nodetool.bat flush mukesh_keyspace employees
+
+nodetool rebuild -ks mukesh_keyspace
+
+it build merkle tree for all the tables
+
+nodetool repair mukesh_keyspace
+
+cqlsh> create index myindex on employees(name);
+
+nodetool rebuild_index mukesh_keyspace employees myindex
+
+nodetool compact mukesh_keyspace employees
+
+nodetool compactionhistory 
+
+nodetool compactionstats
+
+nodetool status give will you UUID for each node.
+
+nodetool removenode UUID
+
+nodetool getsstables mukesh_keyspace employees 100
+
+nodetool describering
+nodetool proxyhistograms
+
+nodetool rangekeysample 
+
+nodetool tablestats
+nodetool help scrub
+nodetool tablehistograms mukesh_keyspace.employees
+ 
+nodetool toppartitions mukesh_keyspace employees 1200(duration in sec)
+
+(2Mins)
+nodetool tpstats
+
+nodetool <options> setcachekeystosave -- <key-cache-keys-to-save> <rowcache-
+keys-to-save>
+
+nodetool setcompactionthreshold -- <keyspace> <table>
+<minthreshold> <maxthreshold>
+
+nodetool setcompactionthreshold mukesh_keyspace employees 6 26
+
+nodetool <options> setcachekeystosave -- <key-cache-keys-to-save> <rowcache-
+keys-to-save> <counter-keys-to-save>
+
+nodetool setcachekeystosave 1000000 20000 5
+
+nodetool setcompactionthroughput 10(MB)
+
+nodetool sethintedhandoffthrottlekb 512
+nodetool settraceprobability 1
+nodetool snapshot mukesh_keyspace
+
+nodetool listsnapshots
+
+
+nodetool enablebackup
+
+// once you enable the backup, then Cassandra will periodically takes back-up whenever new sstables are created 
+
+nodetool statusbackup
+
+
+truncate the table
+
+nodetool refresh
+
+sstableloader -d 110.82.155.1 /var/lib/cassandra/data/Keyspace1/Standard1
+
+insert into employees JSON '{"id":1,"name":"Mukesh","city":"BLR","dept":150}';
+
+
+select json id,city,name from employees;
+
+
+--------------------------------------------------
+
+consistency local_quorum
+
+consistency quorum
+
+consistency ALL
+
+
+select token(dept) from employees where dept=100;
+
+CREATE TABLE purchases3 (
+user text,
+balance int static,
+expense_id int,
+amount int,
+description text,
+paid boolean,
+PRIMARY KEY (user, expense_id));
+
+BEGIN BATCH
+INSERT INTO purchases3 (user, balance) VALUES ('user1', -8) IF NOT EXISTS;
+INSERT INTO purchases3 (user, expense_id, amount, description, paid)
+VALUES ('user1', 1, 8, 'burrito', false);
+APPLY BATCH;
+
+BEGIN BATCH
+UPDATE purchases3 SET balance = -208 WHERE user='user1' IF balance = -8;
+INSERT INTO purchases3 (user, expense_id, amount, description, paid)
+VALUES ('user1', 2, 200, 'hotel room', false);
+APPLY BATCH;
+--------------------
+
+INSERT INTO purchases3 (user, expense_id, amount, description, paid)
+VALUES ('user4', 3, 200, 'hotel room', false);
+
+
+BEGIN UNLOGGED BATCH
+insert into employees(id,name,city,dept) values(10,'Messi','Barcelona',2000);
+insert into employees(id,name,city,dept) values(11,'Ronaldo','Madrid',3000);
+
+APPLY BATCH;
+
+BEGIN BATCH
+insert into keshav.emp(id,name,city,dept) values(10,'Messi','Barcelona',2000);
+insert into dilip_kewspace.employees_test2(id,name,city,dept) values(10,'Messi','Barcelona',2000);
+APPLY BATCH;
+
+BEGIN BATCH
+insert into keshav.emp(id,name,city,dept) values(10,'Messi','Barcelona',2000) if not exists;
+delete from keshav.emp where id=10;
+APPLY BATCH;
+
+
+BEGIN BATCH
+insert into employees(id,name,city,dept) values(11,'Bhutia','India',3000);
+update employees SET name='Ronaldo' where dept=2000 AND city='Barcelona';
+APPLY BATCH;
+
+update employees SET name='Ronaldo' where dept=2000 AND city='Barcelona
+
+Bug:
+within one transaction same record can not be updated if it is getting inserted in the previous command
+
+-----------------------
+BEGIN BATCH
+INSERT INTO purchases (user, balance) VALUES ('user1', -8) USING TIMESTAMP
+19998889022757000;
+INSERT INTO purchases (user, expense_id, amount, description, paid)
+VALUES ('user1', 1, 8, 'burrito', false);
+APPLY BATCH;
+
+
+SELECT balance, WRITETIME(balance) FROM PURCHASES;
+-----------------------------------------------------------
+
+
+COPY employees (name, id, dept, city) TO 'D:\\employees.csv';
+create table employees1(id int,name text,city varchar,dept int,primary key(dept,city));
+
+
+COPY employees1 (name, id, dept, city) FROM 'D:\\employees.csv';
+
+COPY employees1 (name, id, dept, city) FROM 'D:\\employees.csv' WITH header=true AND DELIMITER=','
+
+
+------------------------------------------------------------------------------------------
+
+EXPAND ON;
+PAGING ( ON | OFF )
+SOURCE '/mydir/myfile.txt'
+----------------------------------
+
+cqlsh 10.11.12.12 --file '/mydir/myfile.txt'
+
+cqlsh -e "SELECT * FROM mytable" > myoutput.txt
+---------------------------------------
+CREATE TABLE t (
+k text,
+s text STATIC,
+i int,
+PRIMARY KEY (k, i)
+);
+INSERT INTO t (k, s, i) VALUES ('k', 'I''m shared', 0);
+INSERT INTO t (k, s, i) VALUES ('k', 'I''m still shared', 1);
+SELECT * FROM t;
+---------------------------------
+
+
+CREATE TABLE networkdata_timeseries (
+network_id uuid,
+category text,
+alias text,
+PRIMARY KEY (network_id,category)
+) WITH compression = { 'sstable_compression' : 'SnappyCompressor', 'chunk_length_kb' : 64 } AND compaction = { 'class' : 'DateTieredCompactionStrategy', 'min_threshold' : 6 } AND CLUSTERING ORDER BY (category DESC);
+
+Pros: Specifically designed for time series data, stored in tables that use the default TTL. DTCS is a better choice when fine-tuning is required to meet space-related SLAs.
+
+Cons: Insertion of records out of time sequence (by repairs or hint replaying) can increase latency or cause errors. In some cases, it may be necessary to turn off read repair and carefully test and control the use of TIMESTAMP options in BATCH, DELETE, INSERT and UPDATE CQL commands.
+---------------------------------------------------------------------------------
+TimeWindowCompactionStrategy:
+The TWCS configuration has two main property settings:
+
+compaction_window_unit: time unit used to define the window size (milliseconds, seconds, hours, and so on)
+compaction_window_size: how many units per window (1,2,3, and so on)
+The configuration for the above example: compaction_window_unit = ‘minutes’,compaction_window_size = 60
+
+CREATE TABLE networkdata_timewindow_hourly (
+network_id uuid,
+category text,
+alias text,
+PRIMARY KEY (network_id,category)
+) WITH compression = { 'sstable_compression' : 'SnappyCompressor', 'chunk_length_kb' : 64 } AND compaction = { 'class' : 'TimeWindowCompactionStrategy', 'compaction_window_unit' : 'minute', 'compaction_window_size':60} AND CLUSTERING ORDER BY (category DESC)
+
+Pros: Used for time series data, stored in tables that use the default TTL for all data. Simpler configuration than that of DTCS.
+
+Cons: Not appropriate if out-of-sequence time data is required, since SSTables will not compact as well. Also, not appropriate for data without a TTL, as storage will grow without bound. Less fine-tuned configuration is possible than with DTCS.
+
+
+-----------------------------------------------------------------------------------
+gzip
+bzip2:  18 : speed is not good
+
+snappy
+LZO :  34: speed will be good
+
+CREATE TABLE device_readIntensive (
+device_id uuid,
+name text,
+cpu_util float,
+io varint,
+PRIMARY KEY (device_id,name)
+) WITH compression = { 'sstable_compression' : 'SnappyCompressor', 'chunk_length_kb' : 64 } AND compaction = { 'class' : 'LeveledCompactionStrategy', 'sstable_size_in_mb':160 } AND CLUSTERING ORDER BY (name DESC);
+-------------------------------------------------------------------------------
+insert into device_readIntensive(device_id,name,cpu_util,io) values(uuid(),'DEV123',45.60,27000) using TTL 120;
+
+select WRITETIME(io) from device_readIntensive;
+select TTL(io) from device_readIntensive;
+
+Pros: Disk requirements are easier to predict. Read operation latency is more predictable. Stale data is evicted more frequently.
+Cons: Much higher I/O utilization impacting operation latency
+
+--------------------------------------------------------------------------------------
+CREATE TRIGGER myTrigger
+ON employees
+USING 'org.apache.cassandra.triggers.InvertedIndex' ;
+------------------------------------------------
+CREATE [OR REPLACE] FUNCTION [IF NOT EXISTS]
+[keyspace.]functionName (param1 type1, param2 type2, …)
+CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT
+RETURN returnType
+LANGUAGE language  
+AS '
+       // source code here  
+';
+
+
+CREATE FUNCTION maxof2(currentvalue int, testvalue int)
+RETURNS NULL ON NULL INPUT
+RETURNS int
+LANGUAGE java
+AS 'return Math.max(currentvalue,testvalue);';
+
+CREATE TABLE test (
+    id int,
+    val1 int,
+    val2 int,
+    PRIMARY KEY(id)
+);
+ 
+INSERT INTO test(id, val1, val2) VALUES(1, 100, 200);
+INSERT INTO test(id, val1) VALUES(2, 100);
+INSERT INTO test(id, val2) VALUES(3, 200);
+
+select id,maxof2(val1,val2) from test;
+
+DROP FUNCTION maxOf;
+
+CREATE OR REPLACE FUNCTION maxOf(current int, testvalue int) 
+CALLED ON NULL INPUT 
+RETURNS int
+LANGUAGE java 
+AS $$return Math.max(current,testvalue);$$;
+
+UDA:
+
+CREATE [OR REPLACE] AGGREGATE [IF NOT EXISTS]
+aggregateName(type1, type2, …)
+SFUNC accumulatorFunction
+STYPE stateType
+[FINALFUNC finalFunction]
+INITCOND initCond;
+
+CREATE TABLE sales_items(shop_id text, day int, category text, count counter, PRIMARY KEY((shop_id),day,category));
+ 
+UPDATE sales_items SET count=count+1300 WHERE shop_id='BestDeals' AND day=20151221 AND category='Books';
+UPDATE sales_items SET count=count+5000 WHERE shop_id='BestDeals' AND day=20151221 AND category='Movies';
+UPDATE sales_items SET count=count+3493 WHERE shop_id='BestDeals' AND day=20151221 AND category='Games';
+ 
+UPDATE sales_items SET count=count+1500 WHERE shop_id='BestDeals' AND day=20151222 AND category='Books';
+UPDATE sales_items SET count=count+7000 WHERE shop_id='BestDeals' AND day=20151222 AND category='Movies';
+UPDATE sales_items SET count=count+9000 WHERE shop_id='BestDeals' AND day=20151222 AND category='Games';
+ 
+UPDATE sales_items SET count=count+1200 WHERE shop_id='BestDeals' AND day=20151223 AND category='Books';
+UPDATE sales_items SET count=count+11000 WHERE shop_id='BestDeals' AND day=20151223 AND category='Movies';
+UPDATE sales_items SET count=count+13000 WHERE shop_id='BestDeals' AND day=20151223 AND category='Games';
+ 
+UPDATE sales_items SET count=count+800 WHERE shop_id='BestDeals' AND day=20151224 AND category='Books';
+UPDATE sales_items SET count=count+3000 WHERE shop_id='BestDeals' AND day=20151224 AND category='Movies';
+UPDATE sales_items SET count=count+1000 WHERE shop_id='BestDeals' AND day=20151224 AND category='Games';
+
+SELECT * FROM sales_items;
+
+Now we want to have an aggregate view of sales count over a period of time for each category of item. So let’s create an UDA for this!
+
+CREATE OR REPLACE FUNCTION cumulateCounter(state map<text,bigint>, category text, count counter)
+RETURNS NULL ON NULL INPUT
+RETURNS map<text,bigint>
+LANGUAGE java
+AS '
+if(state.containsKey(category)) {
+  state.put(category, (long)state.get(category) + count); 
+} else {
+  state.put(category, count);
+}
+return state;
+'; 	
+
+CREATE OR REPLACE AGGREGATE groupCountByCategory(text, counter)
+SFUNC cumulateCounter
+STYPE map<text,bigint>
+INITCOND {};
+
+SELECT groupCountByCategory(category,count) 
+FROM sales_items 
+WHERE shop_id='BestDeals'
+AND day>=20151221 AND day<=20151224;
+
+UDA Execution
+Below is the steps executed by an UDA:
+
+1.Init the state value with INITCOND if provided, or null
+For each row:
+2. call SFUNC with previous state + params as input arguments
+update state with SFUNC returned value
+3. If no FINALFUNC is defined, return the last state
+Else apply FINALFUNC on the last state and return its output
+---------------------------------------------------------------------
+
+cd /home/datastax/demos/weather_sensors/byos-monthly/
+
+dse hadoop fs -mkdir /sensor_data
+
+dse hadoop fs -put byos-monthly.csv /sensor_data
+
+
+----------------------------------------------------
+dse hadoop fs -mkdir /input
+
+vi employees.csv
+1,Mukesh,100,BLR
+2,Prasad,200,Hyd
+3,Manju,300,Chennai
+
+vi employees_role.csv
+1,Trainer
+2,Manager
+3,Developer
+------------------------------------------
+
+dse hadoop fs -put employees.csv /input
+dse hadoop fs -ls /input
+
+dse hadoop fs -cat /input/employees.csv
+
+dse hadoop fs -mkdir /emp_role
+
+dse hadoop fs -put employees_role.csv /emp_role
+
+-----------------
+dse spark
+
+case class employees(id:Int,name:String,dept:Int,city:String)
+case class employees_role(id:Int,role:String)
+
+var emp_rdd= sc.textFile("/input")
+
+emp_rdd.cache
+
+var role_rdd= sc.textFile("/emp_role")
+import sqlContext.implicits._
+
+var empDF = emp_rdd.map(data => data.split(',')).map( row => new employees(row(0).toInt,row(1),row(2).toInt,row(3))).toDF()
+
+empDF.registerTempTable("emptable")
+
+sqlContext.sql("select name,city from emptable where dept> 100").show
+
+var roleDF = role_rdd.map(data => data.split(',')).map(row => new employees_role(row(0).toInt,row(1))).toDF()
+
+roleDF.registerTempTable("emprole")
+
+sqlContext.sql("select A.name,A.city,B.role from emptable A JOIN emprole B ON A.id=B.id").show
+
+-----------------------------------
+RDD operation :
+var weatherdata= sc.textFile("/sensor_data")
+weatherdata.collect.foreach(println)
+weatherdata.saveAsTextFile("/output_sensor")
+
+DataFrame : 
+case class sensor_data(device_id:Int,device_name:String,device_city:String)
+import sqlContext.implicits._
+var weatherdata= sc.textFile("/sensor_data")
+var weatherDataFrame= sc.textFile("/sensor_data").map(row => row.split(',')).map(myrow => new sensor_data(myrow(0).toInt,myrow(1),myrow(2))).toDF()
+
+weatherDataFrame.registerTable("sensor_process_data")
+
+sqlContext.sql("Select count(*) from sensor_process_data group by device_city").show
+
+-----------------------------------------------------------
+
+cqlsh
+
+create keyspace test with replication={'class': 'SimpleStrategy','replication_factor': '1'};
+
+create table employees(id int,dept int,city varchar,name varchar, primary key(dept,city));
+
+create table employees_duplicate(id int,dept int,city varchar,name varchar, primary key(dept,city));
+
+insert into employees(id,name,dept,city) values(1,'ABC',100,'BLR');
+insert into employees(id,name,dept,city) values(2,'XYZ',200,'Chennai');
+------------------------------------------------------------------------
+
+dse spark
+
+var config = new SparkConfig();
+config.set("cassandra-driver","localhost")
+var sc = new SparkContext(config);
+-------------------------------------------------------------
+var cassandraRDD= sc.cassandraTable("test","employees")
+
+cassandraRDD.collect.foreach(println)
+
+var rdd1= cassandraRDD.filter(e => e.get[Integer]("id") > 1)
+
+rdd1.collect.foreach(println)
+
+rdd1.saveToCassandra("test","employees_duplicate")
+
+--------------------------
+var firstrow= cassandraRDD.first
+
+firstrow.get[String]("name")
+
+--------------------------------------------------------
+CREATE TABLE timeline (
+day text,
+hour int,
+min int,
+sec int,
+value text,
+PRIMARY KEY (day, hour, min, sec)
+);
+INSERT INTO timeline (day, hour, min, sec, value)
+VALUES ('12 Jan 2014', 3, 43, 12, 'event1');
+INSERT INTO timeline (day, hour, min, sec, value)
+VALUES ('12 Jan 2014', 3, 52, 58, 'event2');
+INSERT INTO timeline (day, hour, min, sec, value)
+VALUES ('12 Jan 2014', 4, 37, 01, 'event3');
+INSERT INTO timeline (day, hour, min, sec, value)
+VALUES ('12 Jan 2014', 4, 37, 41, 'event3');
+INSERT INTO timeline (day, hour, min, sec, value)
+VALUES ('12 Jan 2014', 6, 00, 34, 'event4');
+
+SELECT * FROM timeline WHERE day='12 Jan 2014'
+AND (hour, min) >= (3, 50)
+AND (hour, min, sec) <= (4, 37, 30);
+
+------------------------------------------------------------
+The sstableverify utility will verify the SSTable for a provided table and look for errors or data corruption:
+sstableverify --verbose cycling cyclist_name
+
+sstablescrub
+
+The sstableutil will list the SSTable files for a provided table:
+// sstableutil shows all the sstables for a given table
+sstableutil test employees_test2
+
+sstablesplit: Use this Use this tool to split SSTables files into multiple SSTables of a maximum designated size.
+
+sstablesplit -s 40 /var/lib/cassandra/data/data/Keyspace1/Standard1/*
+
+sstablescrub: The sstablescrub utility is an offline version of nodetool scrub. It attempts to remove the corrupted parts while preserving non-corrupted data
+sstablescrub --verbose keyspace table
+
+sstabledump "C:\Program Files\DataStax-DDC\data\data\playlist\track_by_artist-2316d4704bfc11e7a5aea3d254dae611\mc-5-big-Data.db"
+
+sstablemetadata:The sstablemetadata utility prints metadata about a specified SSTable
+bin/sstablemetadata <sstable_name filenames>
+
+sstableloader:The Cassandra bulk loader, also called the sstableloader, provides the ability to:
+• Bulk load external data into a cluster.
+Load existing SSTables into another cluster with a different number of nodes or replication strategy.
+• Restore snapshots
+
+sstableloader -d 110.82.155.1 /var/lib/cassandra/data/Keyspace1/Standard1/
+
+
+-------------------------------------------------------
+To load the connector into the Spark Shell:
+
+start the shell with this command:  ../bin/spark-shell –jars ~/apps/spark-1.2/jars/spark-cassandra-connector-assembly-1.1.1-SNAPSHOT.jar
+
+
+
+
+
+jar is available at:
+https://mvnrepository.com/artifact/com.datastax.spark/spark-cassandra-connector_2.10/1.4.0-M1
+
+./bin/spark-shell –jars ~/apps/spark-1.2/jars/spark-cassandra-connector-assembly-1.1.1-SNAPSHOT.jar
+
+
+import com.datastax.spark.connector._, org.apache.spark.SparkContext, org.apache.spark.SparkContext._, org.apache.spark.SparkConf
+
+sc.stop
+
+val conf = new SparkConf(true).set("spark.cassandra.connection.host", "localhost")
+
+val sc = new SparkContext(conf)
+
+spark-shell --packages com.datastax.spark:spark-cassandra-connector_2.11:2.0.1
+
+case class Movie(Id: Int, Title: String, Genres: String)
+val data = sc.cassandraTable[Movie]("spark_demo", "movies")
+------------------------------------------------------------------
+
+mukesh.shukla@gmail.com
+
+9880061584
+
+
+

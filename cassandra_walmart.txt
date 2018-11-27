@@ -1,0 +1,84 @@
+
+
+Creating cluster:
+
+WalmartCluster1
+: seeds 
+     172.28.127.110
+	 172.30.110.62
+	 172.30.111.198
+	 172.28.124.33
+	 
+	 
+WalmartCluster2
+BLR: seeds 
+     172.28.124.188
+	 172.30.111.210
+
+WalmartCluster3
+172.28.126.242
+172.28.124.46
+
+endpoint_snitch
+listen_address
+rpc_address
+
+
+----------------------------------
+
+
+./nodetool status
+
+
+-------------------------------------------
+
+cqlsh.bat 10.11.12.13
+
+./cqlsh 10.11.12.13
+
+describe keyspaces;
+
+create keyspace walmart_mukesh with replication={'class': 'NetworkTopologyStrategy','BLR': '2','Chennai': '2'}; 
+
+describe keyspaces;
+
+use walmart_mukesh;
+
+create table employees1(id int,name varchar,dept int,city varchar,primary key(id,dept,city));
+
+
+create table employees2(id int,name varchar,dept int,city varchar,primary key((dept,city),name);
+
+insert into employees1(id,dept,city) values(1,100,'BLR');
+
+nodetool getendpoints walmart_mukesh employees1 1
+
+nodetool getsstables walmart_mukesh employees1 1
+
+nodetool flush walmart_mukesh employees1
+
+nodetool tablestats walmart_mukesh.employees1
+
+nodetool compact walmart_mukesh employees1
+
+nodetool describering walmart_mukesh
+
+nodetool describecluster
+
+
+COPY employees (name, id, dept, city) TO 'D:\\employees.csv';
+
+nodetool getsstables test employees 1
+
+
+
+
+
+
+
+
+
+
+
+
+
